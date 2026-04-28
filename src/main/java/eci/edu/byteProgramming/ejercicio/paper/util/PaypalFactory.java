@@ -1,47 +1,65 @@
 package eci.edu.byteProgramming.ejercicio.paper.util;
 
-public class PaypalFactory extends PaymentMethod{
+/**
+ * Factory concreta que crea pagos via PayPal.
+ * Implementa PaymentFactory para integrarse con ECIPayment.
+ */
+public class PaypalFactory extends PaymentMethod implements PaymentFactory {
+
     private String email;
     private String paypalTransactionId;
     private String authToken;
-    
+
     public PaypalFactory(double amount, String customerId, String description,
-                 String email, String authToken) {
+                         String email, String authToken) {
         super(amount, customerId, description);
-        this.email = email;
+        this.email     = email;
         this.authToken = authToken;
     }
-    
+
+    /**
+     * Implementacion de PaymentFactory: crea una nueva instancia de PaypalFactory
+     * reutilizando el email y authToken ya configurados.
+     *
+     * @param amount      monto del pago
+     * @param customerId  id del cliente
+     * @param description descripcion del pago
+     * @return nueva instancia de PaypalFactory lista para procesar
+     */
+    @Override
+    public PaymentMethod createPaymentMethod(double amount, String customerId, String description) {
+        return new PaypalFactory(amount, customerId, description, email, authToken);
+    }
+
     @Override
     public boolean validatePaymentMethod() {
         return validateEmail() && validateAuthToken();
     }
-    
+
     private boolean validateEmail() {
         return email != null && email.contains("@") && email.contains(".");
     }
-    
+
     private boolean validateAuthToken() {
         return authToken != null && authToken.length() > 10;
     }
-    
+
     @Override
     public boolean processPayment() {
         System.out.println("Processing PayPal payment...");
-        
+
         if (!validatePaymentMethod()) {
             System.out.println("PayPal validation failed!");
             setStatus(PaymentStatus.FAILED);
             return false;
         }
-        
+
         setStatus(PaymentStatus.PROCESSING);
-        
+
         try {
             Thread.sleep(1500);
             this.paypalTransactionId = "PP" + System.currentTimeMillis();
             System.out.println("PayPal payment authorized for: " + email);
-            
             setStatus(PaymentStatus.COMPLETED);
             return true;
         } catch (Exception e) {
@@ -49,12 +67,9 @@ public class PaypalFactory extends PaymentMethod{
             return false;
         }
     }
-    
+
     @Override
-    public String getPaymentMethod() {
-        return "PAYPAL";
-    }
-    
-    public String getEmail() { return email; }
-    public String getPaypalTransactionId() { return paypalTransactionId; }
+    public String getPaymentMethod()         { return "PAYPAL";             }
+    public String getEmail()                 { return email;                }
+    public String getPaypalTransactionId()   { return paypalTransactionId;  }
 }
